@@ -14,9 +14,7 @@ pipeline {
       }   
       }
        stage('Unit Test Cases') {
-         agent {
-              label 'BuildServer'
-          }
+
           steps{
               sh "${mvnHome}/bin/mvn clean test"  
           }
