@@ -4,6 +4,13 @@ pipeline {
    agent any
     
    stages {
+      stage ('Notify') {
+         steps {
+               //send build start notification email and/or slack notification
+                sh "echo Build Started"
+               }
+			   }
+
       stage('Prepare Workspace') {
          steps {
             // Get src code from a GitHub repository
@@ -62,6 +69,18 @@ pipeline {
 	           sh "sudo kubectl --kubeconfig=/home/ubuntu/.kube/config apply -f k8s-code/staging/app/deploy-webapp.yml"
 		   sh "sudo kubectl --kubeconfig=/home/ubuntu/.kube/config apply -f k8s-code/staging/app/service.yml"
           	}		    
-          }
+		  
+        post {
+        success {
+            // Send successful email notification
+			sh "echo Build SUCCESSFUL"
+			
+                }
+        failure {
+            // Send failure email notification
+			sh "echo Build failed"
+              }
+	   }
+        }
       }
       }
