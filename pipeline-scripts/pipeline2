@@ -1,0 +1,86 @@
+def mvnHome
+
+pipeline {
+   agent any
+    
+   stages {
+      stage ('Notify') {
+         steps {
+               //send build start notification email and/or slack notification
+                sh "echo Build Started"
+               }
+			   }
+
+      stage('Prepare Workspace') {
+         steps {
+            // Get src code from a GitHub repository
+            git credentialsId: 'GitHub-Credentials', url: 'https://github.com/sasi-awsdevops/jenkins-task.git'
+            script{
+                mvnHome = tool name: 'maven3', type: 'maven'
+            }      
+      }   
+      }
+       stage('Unit Test Cases') {
+
+          steps{
+              sh "${mvnHome}/bin/mvn clean test"  
+          }
+          post{
+              success{
+                  junit 'target/surefire-reports/*.xml'
+              }
+          }
+      }
+      stage('Build Code') {
+          steps{
+              sh "${mvnHome}/bin/mvn clean package"  
+          }
+          post{
+              success{
+                  archiveArtifacts '**/*.war'
+              }
+          }
+      }
+      stage('Build Docker Image') {
+
+         steps{
+                  sh "docker build -t sasidhar299/testwebapp ."  
+         }
+     }
+     
+      stage('Publish Docker Image') {
+           steps{
+
+             	withCredentials([usernamePassword(credentialsId: 'DockerID', passwordVariable: 'DockerPassword', usernameVariable: 'DockerUser')]) {
+         		sh "docker login -u ${DockerUser} -p ${DockerPassword}"
+      	}
+            	sh "docker push sasidhar299/testwebapp"
+         }
+       }
+       
+     stage('Deploy to Staging') {
+	
+	        steps{
+	           //Deploy to K8s Cluster 
+                   echo "Deploy to Staging Server"
+	           sh "git pull origin master"
+		   sh "cd k8s-code/staging/app"
+		   sh "pwd"
+	           sh "sudo kubectl --kubeconfig=/home/ubuntu/.kube/config apply -f k8s-code/staging/app/deploy-webapp.yml"
+		   sh "sudo kubectl --kubeconfig=/home/ubuntu/.kube/config apply -f k8s-code/staging/app/service.yml"
+          	}		    
+          }
+		  
+        post {
+        success {
+            // Send successful email notification
+			sh "echo Build SUCCESSFUL"
+			
+                }
+        failure {
+            // Send failure email notification
+			sh "echo Build failed"
+        }
+		}
+      }
+      }
