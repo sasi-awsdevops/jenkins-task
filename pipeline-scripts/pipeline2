@@ -69,7 +69,6 @@ pipeline {
 	           sh "sudo kubectl --kubeconfig=/home/ubuntu/.kube/config apply -f k8s-code/staging/app/deploy-webapp.yml"
 		   sh "sudo kubectl --kubeconfig=/home/ubuntu/.kube/config apply -f k8s-code/staging/app/service.yml"
           	}		    
-          }
 		  
         post {
         success {
@@ -80,7 +79,8 @@ pipeline {
         failure {
             // Send failure email notification
 			sh "echo Build failed"
+              }
+	   }
         }
-		}
       }
       }
