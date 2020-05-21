@@ -67,10 +67,12 @@ pipeline {
 	           sh "git pull origin master"
 		   {
 		   sh "sudo kubectl --kubeconfig=/home/ubuntu/.kube/config delete -f k8s-code/staging/app/deploy-webapp.yml"
+		   {
 		   catch (err) {
                          echo "exception caught, going on"
 	                 println err
 	                 }
+		   }
 		   }
 	           sh "sudo kubectl --kubeconfig=/home/ubuntu/.kube/config apply -f k8s-code/staging/app/deploy-webapp.yml"
 		   sh "sudo kubectl --kubeconfig=/home/ubuntu/.kube/config apply -f k8s-code/staging/app/service.yml"
